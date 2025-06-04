@@ -14,8 +14,19 @@
       imports = [ inputs.treefmt-nix.flakeModule ];
       systems = import inputs.systems;
       perSystem =
-        { pkgs, self', ... }:
         {
+          lib,
+          pkgs,
+          self',
+          ...
+        }:
+        {
+          checks =
+            let
+              devShells = lib.mapAttrs' (n: lib.nameValuePair "devShell-${n}") self'.devShells;
+              packages = lib.mapAttrs' (n: lib.nameValuePair "package-${n}") self'.packages;
+            in
+            lib.filterAttrs (_n: v: v.meta.available && !v.meta.broken) (devShells // packages);
           devShells = {
             default = pkgs.mkShell {
               packages = [ self'.packages.default ];
